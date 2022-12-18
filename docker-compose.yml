@@ -1,6 +1,17 @@
 version: "3.8"
 
 services:
+  database:
+      image: mysql:5.7
+      environment:
+        MYSQL_ALLOW_EMPTY_PASSWORD: 'yes'
+      ports:
+        - "3306:3306"
+      restart: unless-stopped
+      volumes:
+        - dbdata:/var/lib/mysql
+      networks:
+      - backend
   serv:
     build:
       context: ./docker
@@ -9,8 +20,24 @@ services:
     volumes:
       - ./:/var/www/html
       - ./docker/apache/default.conf:/etc/apache2/sites-enabled/000-default.conf
+    depends_on:
+      - database
     networks:
       - backend
-
+  phpmyadmin:
+      image: phpmyadmin/phpmyadmin
+      links:
+        - database
+      environment:
+        PMA_HOST: database
+        PMA_PORT: 3306
+        PMA_ARBITRARY: 1
+      restart: always
+      ports:
+      - 8081:80
+      networks:
+      - backend
+volumes:
+  dbdata:
 networks:
   backend:
